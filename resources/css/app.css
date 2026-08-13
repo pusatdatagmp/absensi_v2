@@ -1,0 +1,370 @@
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+:root {
+    --background: hsl(240, 10%, 4%);
+    --foreground: hsl(0, 0%, 98%);
+    --card: hsl(0, 0%, 3.9%);
+    --card-foreground: hsl(0, 0%, 98%);
+    --popover: hsl(0, 0%, 3.9%);
+    --popover-foreground: hsl(0, 0%, 98%);
+    --primary: hsl(0, 0%, 98%);
+    --primary-foreground: hsl(0, 0%, 9%);
+    --secondary: hsl(0, 0%, 14.9%);
+    --secondary-foreground: hsl(0, 0%, 98%);
+    --muted: hsl(0, 0%, 6.9%);
+    --muted-foreground: hsl(0, 0%, 63.9%);
+    --accent: hsl(0, 0%, 14.9%);
+    --accent-foreground: hsl(0, 0%, 98%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(0, 0%, 14.9%);
+    --input: hsl(0, 0%, 14.9%);
+    --ring: hsl(0, 0%, 83.1%);
+    --chart-1: hsl(220, 70%, 50%);
+    --chart-2: hsl(160, 60%, 45%);
+    --chart-3: hsl(30, 80%, 55%);
+    --chart-4: hsl(280, 65%, 60%);
+    --chart-5: hsl(340, 75%, 55%);
+    --sidebar-background: hsl(240, 10%, 4%);
+    --sidebar-foreground: hsl(0, 0%, 80%);
+    --sidebar-primary: hsl(360, 100%, 100%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(265, 88%, 27%);
+    --sidebar-accent-foreground: hsl(240, 4.8%, 95.9%);
+    --sidebar-border: hsl(0, 0%, 15.9%);
+    --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+}
+
+.dark {
+    --background: hsl(240, 78%, 2%);
+    --foreground: hsl(0, 0%, 98%);
+    --card: hsl(0, 0%, 3.9%);
+    --card-foreground: hsl(0, 0%, 98%);
+    --popover: hsl(0, 0%, 3.9%);
+    --popover-foreground: hsl(0, 0%, 98%);
+    --primary: hsl(0, 0%, 98%);
+    --primary-foreground: hsl(0, 0%, 9%);
+    --secondary: hsl(0, 0%, 14.9%);
+    --secondary-foreground: hsl(0, 0%, 98%);
+    --muted: hsl(0, 0%, 6.9%);
+    --muted-foreground: hsl(0, 0%, 63.9%);
+    --accent: hsl(0, 0%, 14.9%);
+    --accent-foreground: hsl(0, 0%, 98%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(0, 0%, 14.9%);
+    --input: hsl(0, 0%, 14.9%);
+    --ring: hsl(0, 0%, 83.1%);
+    --chart-1: hsl(220, 70%, 50%);
+    --chart-2: hsl(160, 60%, 45%);
+    --chart-3: hsl(30, 80%, 55%);
+    --chart-4: hsl(280, 65%, 60%);
+    --chart-5: hsl(340, 75%, 55%);
+    --sidebar-background: hsl(240, 10%, 4%);
+    --sidebar-foreground: hsl(0, 0%, 80%);
+    --sidebar-primary: hsl(360, 100%, 100%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(265, 77%, 39%);
+    --sidebar-accent-foreground: hsl(240, 4.8%, 95.9%);
+    --sidebar-border: hsl(0, 0%, 15.9%);
+    --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+.rgb-border {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.rgb-border::before {
+    content: "";
+    position: absolute;
+    inset: -150%;
+    background: conic-gradient(from 0deg,
+            #3b82f6,
+            /* biru */
+            #ffffff,
+            /* putih */
+            #60a5fa,
+            /* biru muda */
+            #ffffff,
+            #2563eb,
+            /* biru tua */
+            #ffffff,
+            #3b82f6);
+    animation: rotateBorder 4s linear infinite;
+}
+
+.rgb-border::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: calc(1rem - 2px);
+}
+
+.rgb-border>div {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes rotateBorder {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Kontainer Utama */
+.garuda-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+    background: transparent;
+    padding: 20px;
+}
+
+/* Lingkaran Merah Utama */
+.garuda-logo {
+    width: 180px;
+    height: 180px;
+    position: relative;
+    animation: bernapas 4s ease-in-out infinite;
+}
+
+.lingkaran-luar {
+    width: 100%;
+    height: 100%;
+    border: 14px solid #ff0000;
+    border-radius: 50%;
+    border-left-color: transparent;
+    /* Membuat efek sayap memotong lingkaran */
+    transform: rotate(-15deg);
+    position: relative;
+}
+
+/* Kepala Garuda */
+.kepala-garuda {
+    position: absolute;
+    top: 15px;
+    right: -10px;
+    width: 70px;
+    height: 45px;
+    background: #ff0000;
+    border-radius: 50% 50% 20% 20%;
+    transform: rotate(15deg);
+}
+
+.paruh {
+    position: absolute;
+    right: -25px;
+    top: 12px;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 30px solid #ff0000;
+    transform: rotate(-10deg);
+}
+
+.mata {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 50%;
+}
+
+.jambul {
+    position: absolute;
+    left: -10px;
+    top: -5px;
+    width: 30px;
+    height: 20px;
+    background: #ff0000;
+    border-radius: 50% 0 0 50%;
+    transform: rotate(20deg);
+}
+
+/* Sayap / Bulu Kiri */
+.sayap-kontainer {
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    transform: rotate(15deg);
+}
+
+.bulu {
+    background: #ff0000;
+    margin-bottom: -25px;
+    transform-origin: bottom right;
+}
+
+.bulu-1 {
+    width: 90px;
+    height: 45px;
+    border-radius: 100px 0 0 100px;
+    transform: rotate(-20deg);
+}
+
+.bulu-2 {
+    width: 110px;
+    height: 45px;
+    border-radius: 100px 0 0 100px;
+    transform: rotate(-35deg);
+    animation: kibarBulu 3s ease-in-out infinite alternate;
+}
+
+.bulu-3 {
+    width: 80px;
+    height: 40px;
+    border-radius: 100px 0 0 100px;
+    transform: rotate(-50deg);
+}
+
+/* Bagian Teks */
+.garuda-text {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.text-utama {
+    color: #ff0000;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    margin: 0;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.text-sub {
+    color: #ff0000;
+    font-family: 'Georgia', cursive, serif;
+    /* Meniru font skrip/latin */
+    font-style: italic;
+    font-size: 1.5rem;
+    margin: -5px 0 0 0;
+}
+
+/* --- ANIMASI CSS --- */
+
+/* Efek Bernapas (Membesar & Mengecil Halus) */
+@keyframes bernapas {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.2));
+    }
+
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6));
+    }
+}
+
+/* Efek pergerakan halus pada bulu sayap */
+@keyframes kibarBulu {
+    0% {
+        transform: rotate(-35deg) scaleX(1);
+    }
+
+    100% {
+        transform: rotate(-38deg) scaleX(1.05);
+    }
+}

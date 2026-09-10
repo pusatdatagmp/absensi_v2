@@ -11,9 +11,9 @@ import {
     SidebarMenuItem
 } from '@/components/ui/sidebar';
 
-import { type NavItem } from '@/types';
+import { type NavItem, type SharedData } from '@/types';
 
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 import {
     LayoutGrid,
@@ -47,6 +47,8 @@ const mainNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { appName } = usePage<SharedData>().props;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
 
@@ -96,7 +98,7 @@ export function AppSidebar() {
                             text-transparent
                         "
                                 >
-                                    DEEVATECH
+                                    {appName}
                                 </h1>
 
                             </Link>

@@ -67,7 +67,7 @@ class DashboardController extends Controller
             });
 
         // DATA TABLE
-        $attendanceData = Attendance::with('user')
+        $attendanceData = Attendance::with(['user', 'officeLocation'])
             ->whereHas('user')
             ->whereDate('date', now())
             ->latest()
@@ -90,6 +90,11 @@ class DashboardController extends Controller
                     'attendance_level' => $attendanceLevel,
                     'latitude' => $attendance->latitude,
                     'longitude' => $attendance->longitude,
+                    // Jarak & radius yang sama persis dengan yang dipakai
+                    // AttendanceService saat check-in, bukan dihitung ulang
+                    // terhadap lokasi kantor tunggal yang berbeda.
+                    'distance' => $attendance->distance,
+                    'radius' => $attendance->officeLocation?->radius,
                 ];
             });
 
@@ -106,8 +111,6 @@ class DashboardController extends Controller
                     'status' => 'tidak_hadir',
                 ];
             });
-
-        $setting = Setting::first();
 
         return Inertia::render('dashboard', [
 
@@ -140,12 +143,6 @@ class DashboardController extends Controller
             'attendanceData' => $attendanceData,
             'attendanceChart' => $attendanceChart,
             'notAttendanceData' => $notAttendanceData,
-
-            'office' => [
-                'latitude' => $setting->office_latitude ?? 0,
-                'longitude' => $setting->office_longitude ?? 0,
-                'radius' => $setting->attendance_radius?? 100,
-            ],
         ]);
     }
 }

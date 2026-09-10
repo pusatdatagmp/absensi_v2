@@ -41,6 +41,8 @@ interface AttendanceData {
     latitude: number | null;
     longitude: number | null;
     attendance_level: string;
+    distance: number | null;
+    radius: number | null;
 }
 
 interface StatisticItem {
@@ -50,12 +52,6 @@ interface StatisticItem {
 }
 
 interface PageProps {
-    office: {
-        latitude: number;
-        longitude: number;
-        radius: number;
-    };
-
     statistics: StatisticItem[];
     attendanceData: AttendanceData[];
     attendanceChart: AttendanceChart[];
@@ -90,39 +86,9 @@ const statusConfig: Record<
 
 export default function Dashboard() {
 
-    const { office } = usePage<PageProps>().props;
-
-    const OFFICE_LAT = office.latitude;
-    const OFFICE_LNG = office.longitude;
-
     const [selectedTitle, setSelectedTitle] = useState("");
     const [showDetail, setShowDetail] = useState(false);
     const [selectedEmployees, setSelectedEmployees] = useState<AttendanceData[]>([]);
-
-    function calculateDistance(
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ) {
-        const R = 6371000;
-
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-
-        const a =
-            Math.sin(dLat / 2) ** 2 +
-            Math.cos(lat1 * Math.PI / 180) *
-            Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) ** 2;
-
-        const c = 2 * Math.atan2(
-            Math.sqrt(a),
-            Math.sqrt(1 - a)
-        );
-
-        return R * c;
-    }
 
     const {
         statistics = [],
@@ -531,20 +497,12 @@ export default function Dashboard() {
                                             const status =
                                                 statusConfig[item.status];
 
-                                            const distance =
-                                                item.latitude != null &&
-                                                    item.longitude != null
-                                                    ? calculateDistance(
-                                                        item.latitude,
-                                                        item.longitude,
-                                                        OFFICE_LAT,
-                                                        OFFICE_LNG
-                                                    )
-                                                    : null;
+                                            const distance = item.distance;
 
                                             const isFar =
                                                 distance !== null &&
-                                                distance > office.radius;
+                                                item.radius !== null &&
+                                                distance > item.radius;
 
                                             return (
                                                 <tr

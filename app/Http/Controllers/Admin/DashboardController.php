@@ -142,9 +142,9 @@ class DashboardController extends Controller
             'notAttendanceData' => $notAttendanceData,
 
             'office' => [
-                'latitude' => $setting->office_latitude,
-                'longitude' => $setting->office_longitude,
-                'radius' => $setting->attendance_radius,
+                'latitude' => $setting->office_latitude ?? 0,
+                'longitude' => $setting->office_longitude ?? 0,
+                'radius' => $setting->attendance_radius?? 100,
             ],
         ]);
     }

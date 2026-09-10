@@ -39,6 +39,14 @@ interface TodayAttendance {
     approval_note: string | null;
 }
 
+// Paksa browser pakai GPS asli (bukan estimasi WiFi/IP/menara seluler)
+// yang bisa meleset ratusan meter - ratusan km dari posisi fisik sebenarnya.
+const GEOLOCATION_OPTIONS: PositionOptions = {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0,
+};
+
 // ========== Rumus Haversine ==========
 function calculateDistance(
     lat1: number,
@@ -113,6 +121,8 @@ export default function Attendance() {
         longitude: null,
     });
 
+    const [accuracy, setAccuracy] = useState<number | null>(null);
+
     const hasCheckedIn = !!todayAttendance;
     const hasCheckedOut = !!todayAttendance?.check_out_time;
     const canCheckOut =
@@ -130,10 +140,12 @@ export default function Attendance() {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                 });
+                setAccuracy(position.coords.accuracy);
             },
             () => {
                 console.log("Lokasi tidak diizinkan");
-            }
+            },
+            GEOLOCATION_OPTIONS
         );
     }, []);
 
@@ -228,6 +240,7 @@ export default function Attendance() {
                     latitude,
                     longitude,
                 });
+                setAccuracy(position.coords.accuracy);
 
                 form.transform(() => ({
                     status: "hadir",
@@ -265,7 +278,9 @@ export default function Attendance() {
                     title: "Lokasi Ditolak",
                     text: "Izinkan akses lokasi",
                 });
-            }
+            },
+
+            GEOLOCATION_OPTIONS
         );
     };
 
@@ -285,6 +300,7 @@ export default function Attendance() {
                     latitude,
                     longitude,
                 });
+                setAccuracy(position.coords.accuracy);
 
                 checkOutForm.transform(() => ({
                     latitude: String(latitude),
@@ -321,7 +337,9 @@ export default function Attendance() {
                     title: "Lokasi Ditolak",
                     text: "Izinkan akses lokasi",
                 });
-            }
+            },
+
+            GEOLOCATION_OPTIONS
         );
     };
 
@@ -783,6 +801,21 @@ export default function Attendance() {
                                     {" "}
                                     Meter
                                 </p>
+
+                                {accuracy !== null && (
+                                    <p className="text-sm text-white/60">
+                                        Akurasi GPS :
+                                        {" "}
+                                        ±{accuracy.toFixed(0)}
+                                        {" "}
+                                        Meter
+                                        {nearestLocation && accuracy > nearestLocation.radius && (
+                                            <span className="ml-2 text-yellow-300">
+                                                ⚠ Sinyal GPS lemah, aktifkan GPS/lokasi presisi tinggi
+                                            </span>
+                                        )}
+                                    </p>
+                                )}
 
                                 <div className="mt-4">
 

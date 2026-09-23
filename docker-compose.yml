@@ -5,45 +5,58 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: absensi_app
+    container_name: absensi-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
-      - absensi_net
+      - absensi
 
-  web:
+  nginx:
     image: nginx:alpine
-    container_name: absensi_nginx
+    container_name: absensi-nginx
     restart: unless-stopped
     ports:
-      - "8082:80"
+      - "127.0.0.1:8082:80"
     volumes:
       - .:/var/www/html
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
     networks:
-      - absensi_net
+      - absensi
+      - shared-network
 
-  db:
+  mysql:
     image: mysql:8.0
-    container_name: absensi_db
+    container_name: absensi-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: absensi_v2_db
-      MYSQL_USER: absensi_user
-      MYSQL_PASSWORD: password_absensi
-      MYSQL_ROOT_PASSWORD: root_absensi_pass
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
-      - absensi_db_data:/var/lib/mysql
+      - absensi_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
-      - absensi_net
+      - absensi
 
 networks:
-  absensi_net:
+  absensi:
     driver: bridge
+  shared-network:
+    external: true
 
 volumes:
-  absensi_db_data:
+  absensi_mysql_data:

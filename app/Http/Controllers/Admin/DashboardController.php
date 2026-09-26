@@ -74,11 +74,12 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($attendance) use ($setting, $lateLevels) {
 
-                $attendanceLevel = $this->attendanceService->resolveAttendanceLevel(
-                    $attendance,
-                    $setting,
-                    $lateLevels
-                );
+                $attendanceLevel = $attendance->attendance_level
+                    ?? $this->attendanceService->resolveAttendanceLevel(
+                        $attendance,
+                        $setting,
+                        $lateLevels
+                    );
 
                 return [
                     'id' => $attendance->id,

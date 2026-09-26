@@ -25,6 +25,8 @@ class SettingResource extends JsonResource
 
             'check_in_start' => $this->check_in_start,
             'check_in_end' => $this->check_in_end,
+            'work_start_time' => $this->work_start_time,
+            'bonus_minutes' => $this->bonus_minutes,
             'check_out' => $this->check_out,
 
             'created_at' => $this->created_at,

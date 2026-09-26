@@ -14,6 +14,8 @@ class Setting extends Model
         'attendance_radius',
         'check_in_start',
         'check_in_end',
+        'work_start_time',
+        'bonus_minutes',
         'check_out',
     ];
 
@@ -21,5 +23,6 @@ class Setting extends Model
         'office_latitude'   => 'float',
         'office_longitude'  => 'float',
         'attendance_radius' => 'integer',
+        'bonus_minutes'     => 'integer',
     ];
 }

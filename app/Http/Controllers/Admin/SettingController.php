@@ -27,6 +27,8 @@ class SettingController extends Controller
                 'attendance_radius' => 100,
                 'check_in_start'    => null,
                 'check_in_end'      => null,
+                'work_start_time'   => null,
+                'bonus_minutes'     => 15,
                 'check_out'         => null,
             ]);
         }

@@ -12,6 +12,7 @@ class Attendance extends Model
         'date',
         'check_in_time',
         'status',
+        'attendance_level',
         'latitude',
         'longitude',
         'location',

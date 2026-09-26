@@ -17,6 +17,8 @@ interface Setting {
     attendance_radius: number;
     check_in_start: string | null;
     check_in_end: string | null;
+    work_start_time: string | null;
+    bonus_minutes: number | null;
     check_out: string | null;
 }
 
@@ -139,6 +141,8 @@ export default function OfficeSettings() {
         attendance_radius: setting.attendance_radius,
         check_in_start: setting.check_in_start?.substring(0, 5) ?? '',
         check_in_end: setting.check_in_end?.substring(0, 5) ?? '',
+        work_start_time: setting.work_start_time?.substring(0, 5) ?? '',
+        bonus_minutes: setting.bonus_minutes ?? 15,
         check_out: setting.check_out?.substring(0, 5) ?? '',
     });
 
@@ -244,64 +248,135 @@ export default function OfficeSettings() {
 
                        
 
-                        {/* Jam Masuk */}
+                        {/* Jendela Absen */}
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <p className="mb-2 text-sm font-medium">
+                                Jendela Absen
+                            </p>
+                            <p className="mb-3 text-sm text-muted-foreground">
+                                Rentang jam tombol absen aktif. Boleh dibuka lebih pagi
+                                dari Jam Masuk Resmi supaya karyawan yang datang awal
+                                tetap bisa absen dan mendapat predikat Bonus.
+                            </p>
 
-                            <div>
-                                <label className="mb-2 block text-sm font-medium">
-                                    Check In Start
-                                </label>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
-                                <input
-                                    type="time"
-                                    className="w-full rounded-lg border px-3 py-2"
-                                    value={data.check_in_start}
-                                    onChange={(e) =>
-                                        setData({
-                                            ...data,
-                                            check_in_start: e.target.value,
-                                        })
-                                    }
-                                />
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Jendela Absen Mulai
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={data.check_in_start}
+                                        onChange={(e) =>
+                                            setData({
+                                                ...data,
+                                                check_in_start: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Jendela Absen Selesai
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={data.check_in_end}
+                                        onChange={(e) =>
+                                            setData({
+                                                ...data,
+                                                check_in_end: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="mb-2 block text-sm font-medium">
-                                    Check In End
-                                </label>
+                        {/* Baseline Jam Masuk */}
 
-                                <input
-                                    type="time"
-                                    className="w-full rounded-lg border px-3 py-2"
-                                    value={data.check_in_end}
-                                    onChange={(e) =>
-                                        setData({
-                                            ...data,
-                                            check_in_end: e.target.value,
-                                        })
-                                    }
-                                />
+                        <div>
+                            <p className="mb-2 text-sm font-medium">
+                                Baseline Jam Masuk
+                            </p>
+                            <p className="mb-3 text-sm text-muted-foreground">
+                                Dipakai untuk menghitung predikat Bonus / Ontime / Telat.
+                                Terpisah dari Jendela Absen di atas.
+                            </p>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Jam Masuk Resmi
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={data.work_start_time}
+                                        onChange={(e) =>
+                                            setData({
+                                                ...data,
+                                                work_start_time: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Toleransi Bonus (menit)
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={data.bonus_minutes}
+                                        onChange={(e) =>
+                                            setData({
+                                                ...data,
+                                                bonus_minutes: Number(e.target.value),
+                                            })
+                                        }
+                                    />
+
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Absen sekian menit atau lebih sebelum Jam Masuk
+                                        Resmi mendapat predikat Bonus.
+                                    </p>
+                                </div>
+
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="mb-2 block text-sm font-medium">
-                                    Check Out
-                                </label>
+                        {/* Check Out */}
 
-                                <input
-                                    type="time"
-                                    className="w-full rounded-lg border px-3 py-2"
-                                    value={data.check_out}
-                                    onChange={(e) =>
-                                        setData({
-                                            ...data,
-                                            check_out: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
+                        <div>
+                            <label className="mb-2 block text-sm font-medium">
+                                Check-out Mulai
+                            </label>
 
+                            <input
+                                type="time"
+                                className="w-full max-w-xs rounded-lg border px-3 py-2"
+                                value={data.check_out}
+                                onChange={(e) =>
+                                    setData({
+                                        ...data,
+                                        check_out: e.target.value,
+                                    })
+                                }
+                            />
                         </div>
 
                         <button
@@ -322,10 +397,10 @@ export default function OfficeSettings() {
                         </label>
 
                         <p className="mb-4 text-sm text-muted-foreground">
-                            Toleransi keterlambatan (dalam menit setelah Check In Start).
+                            Toleransi keterlambatan (dalam menit setelah Jam Masuk Resmi).
                             Admin bisa menambah, mengubah, atau menghapus level kapan saja —
                             level akan otomatis diurutkan dari toleransi terkecil ke terbesar.
-                            Kehadiran yang melewati semua level tercatat sebagai "Setengah Hari".
+                            Kehadiran yang melewati semua level tercatat sebagai "Telat".
                         </p>
 
                         <div className="space-y-3">

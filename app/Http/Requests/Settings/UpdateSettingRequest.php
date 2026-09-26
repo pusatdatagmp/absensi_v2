@@ -64,6 +64,19 @@ class UpdateSettingRequest extends FormRequest
                 'date_format:H:i',
             ],
 
+            'work_start_time' => [
+                'sometimes',
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'bonus_minutes' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+
             'check_out' => [
                 'sometimes',
                 'nullable',

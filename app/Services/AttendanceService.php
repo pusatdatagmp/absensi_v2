@@ -7,6 +7,7 @@ use App\Models\LateLevel;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -89,46 +90,72 @@ class AttendanceService
             }
         }
 
-        DB::transaction(function () use (
-            $user,
-            $nearestLocation,
-            $data,
-            $distance,
-            $approvalStatus
-        ) {
+        $checkInTime = now()->toTimeString();
 
-            Attendance::create([
+        // Snapshot level kehadiran pada saat check-in supaya histori tidak
+        // ikut berubah kalau admin mengubah baseline/late level nanti.
+        $attendanceLevel = $this->determineAttendanceLevel(
+            $data['status'],
+            $checkInTime,
+            $setting
+        );
 
-                'user_id' => $user->id,
+        try {
+            DB::transaction(function () use (
+                $user,
+                $nearestLocation,
+                $data,
+                $distance,
+                $approvalStatus,
+                $checkInTime,
+                $attendanceLevel
+            ) {
 
-                'office_location_id' => $nearestLocation?->id,
+                Attendance::create([
 
-                'date' => now()->toDateString(),
+                    'user_id' => $user->id,
 
-                'check_in_time' => now()->toTimeString(),
+                    'office_location_id' => $nearestLocation?->id,
 
-                'status' => $data['status'],
+                    'date' => now()->toDateString(),
 
-                'latitude' => $data['latitude'] ?? null,
+                    'check_in_time' => $checkInTime,
 
-                'longitude' => $data['longitude'] ?? null,
+                    'status' => $data['status'],
 
-                'location' => $data['location'] ?? null,
+                    'attendance_level' => $attendanceLevel,
 
-                'distance' => $distance,
+                    'latitude' => $data['latitude'] ?? null,
 
-                'approval_status' => $approvalStatus,
+                    'longitude' => $data['longitude'] ?? null,
 
-                // Belum ada catatan admin
-                'approval_note' => null,
+                    'location' => $data['location'] ?? null,
 
-                'approved_by' => null,
+                    'distance' => $distance,
 
-                'approved_at' => $approvalStatus === 'approved'
-                    ? now()
-                    : null,
-            ]);
-        });
+                    'approval_status' => $approvalStatus,
+
+                    // Belum ada catatan admin
+                    'approval_note' => null,
+
+                    'approved_by' => null,
+
+                    'approved_at' => $approvalStatus === 'approved'
+                        ? now()
+                        : null,
+                ]);
+            });
+        } catch (QueryException $e) {
+
+            // Race condition: dua request check-in bersamaan lolos cek
+            // exists() di atas sebelum salah satunya sempat insert. Unique
+            // index (user_id, date) di database jadi penjaga terakhir.
+            if ($this->isDuplicateEntry($e)) {
+                throw new \Exception('Anda sudah melakukan absensi hari ini.');
+            }
+
+            throw $e;
+        }
     }
 
     /**
@@ -136,80 +163,107 @@ class AttendanceService
      */
     public function checkOut(User $user, array $data): void
     {
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', today())
-            ->first();
-
-        if (!$attendance) {
-            throw new \Exception('Anda belum melakukan check-in hari ini.');
-        }
-
-        if ($attendance->status !== 'hadir') {
-            throw new \Exception('Check-out hanya berlaku untuk absensi hadir.');
-        }
-
-        if ($attendance->check_out_time) {
-            throw new \Exception('Anda sudah melakukan check-out hari ini.');
-        }
-
         $setting = Setting::first();
 
-        if ($setting && $setting->check_out) {
+        DB::transaction(function () use ($user, $data, $setting) {
 
-            $now = Carbon::now();
+            $attendance = Attendance::where('user_id', $user->id)
+                ->whereDate('date', today())
+                ->lockForUpdate()
+                ->first();
 
-            $checkOutStart = Carbon::today()->setTimeFromTimeString(
-                $setting->check_out
-            );
-
-            if ($now->lt($checkOutStart)) {
-                throw new \Exception(
-                    "Check-out hanya diperbolehkan mulai pukul {$setting->check_out}"
-                );
+            if (!$attendance) {
+                throw new \Exception('Anda belum melakukan check-in hari ini.');
             }
-        }
 
-        $distance = null;
+            if ($attendance->status !== 'hadir') {
+                throw new \Exception('Check-out hanya berlaku untuk absensi hadir.');
+            }
 
-        if (!empty($data['latitude']) && !empty($data['longitude'])) {
+            if ($attendance->check_out_time) {
+                throw new \Exception('Anda sudah melakukan check-out hari ini.');
+            }
 
-            $officeLocation = $attendance->officeLocation
-                ?? $user->officeLocations()
-                    ->where('is_active', true)
-                    ->get()
-                    ->sortBy(fn($location) => $this->calculateDistance(
+            if ($setting && $setting->check_out) {
+
+                $now = Carbon::now();
+
+                $checkOutStart = Carbon::today()->setTimeFromTimeString(
+                    $setting->check_out
+                );
+
+                if ($now->lt($checkOutStart)) {
+                    throw new \Exception(
+                        "Check-out hanya diperbolehkan mulai pukul {$setting->check_out}"
+                    );
+                }
+            }
+
+            $distance = null;
+            $officeLocation = null;
+
+            if (!empty($data['latitude']) && !empty($data['longitude'])) {
+
+                $officeLocation = $attendance->officeLocation
+                    ?? $user->officeLocations()
+                        ->where('is_active', true)
+                        ->get()
+                        ->sortBy(fn($location) => $this->calculateDistance(
+                            $data['latitude'],
+                            $data['longitude'],
+                            $location->latitude,
+                            $location->longitude
+                        ))
+                        ->first();
+
+                if ($officeLocation) {
+                    $distance = $this->calculateDistance(
                         $data['latitude'],
                         $data['longitude'],
-                        $location->latitude,
-                        $location->longitude
-                    ))
-                    ->first();
-
-            if ($officeLocation) {
-                $distance = $this->calculateDistance(
-                    $data['latitude'],
-                    $data['longitude'],
-                    $officeLocation->latitude,
-                    $officeLocation->longitude
-                );
+                        $officeLocation->latitude,
+                        $officeLocation->longitude
+                    );
+                }
             }
-        }
 
-        $attendance->update([
-            'check_out_time' => now()->toTimeString(),
-            'check_out_latitude' => $data['latitude'] ?? null,
-            'check_out_longitude' => $data['longitude'] ?? null,
-            'check_out_location' => $data['location'] ?? null,
-            'check_out_distance' => $distance,
-        ]);
+            $approvalStatus = $attendance->approval_status;
+            $approvalNote = $attendance->approval_note;
+
+            // Check-in bisa saja sudah disetujui karena masih dalam radius,
+            // tapi check-out dari lokasi yang jauh di luar radius tetap
+            // perlu ditinjau ulang oleh admin.
+            if (
+                $distance !== null &&
+                $officeLocation &&
+                $distance > $officeLocation->radius &&
+                $approvalStatus === 'approved'
+            ) {
+                $approvalStatus = 'pending';
+                $approvalNote = 'Check-out di luar radius kantor, menunggu peninjauan admin.';
+            }
+
+            $attendance->update([
+                'check_out_time' => now()->toTimeString(),
+                'check_out_latitude' => $data['latitude'] ?? null,
+                'check_out_longitude' => $data['longitude'] ?? null,
+                'check_out_location' => $data['location'] ?? null,
+                'check_out_distance' => $distance,
+                'approval_status' => $approvalStatus,
+                'approval_note' => $approvalNote,
+            ]);
+        });
     }
 
     /**
-     * Tentukan level kehadiran (Bonus/Ontime/level telat dinamis/Setengah Hari)
+     * Tentukan level kehadiran (Bonus/Ontime/level telat dinamis/Telat)
      * berdasarkan jam check-in dan daftar level telat yang diatur admin.
      *
      * $lateLevels boleh di-passing dari luar (mis. saat memproses banyak
      * attendance sekaligus dalam satu loop) supaya tidak query berulang.
+     *
+     * Dipakai untuk menghitung ulang level pada attendance lama yang belum
+     * punya kolom attendance_level tersimpan (data sebelum fitur snapshot
+     * ini ada). Untuk attendance baru, level sudah disimpan saat check-in.
      */
     public function resolveAttendanceLevel(
         ?Attendance $attendance,
@@ -217,27 +271,57 @@ class AttendanceService
         ?Collection $lateLevels = null
     ): string {
 
+        if (!$attendance || !$attendance->check_in_time) {
+            return '-';
+        }
+
+        return $this->determineAttendanceLevel(
+            $attendance->status,
+            $attendance->check_in_time,
+            $setting,
+            $lateLevels
+        );
+    }
+
+    /**
+     * Logika inti penentuan level kehadiran. Baseline jam masuk resmi
+     * memakai work_start_time, dengan fallback ke check_in_start untuk
+     * kompatibilitas kalau admin belum mengisi work_start_time. Baseline ini
+     * SENGAJA dipisah dari jendela absen (check_in_start/check_in_end) agar
+     * karyawan yang datang lebih pagi dari jendela check-in tetap bisa absen
+     * dan mendapat predikat Bonus, bukan malah ditolak sistem.
+     */
+    private function determineAttendanceLevel(
+        ?string $status,
+        ?string $checkInTime,
+        ?Setting $setting,
+        ?Collection $lateLevels = null
+    ): string {
+
+        $baselineTime = $setting?->work_start_time ?? $setting?->check_in_start;
+
         if (
-            !$attendance ||
-            $attendance->status !== 'hadir' ||
-            !$attendance->check_in_time ||
+            $status !== 'hadir' ||
+            !$checkInTime ||
             !$setting ||
-            !$setting->check_in_start
+            !$baselineTime
         ) {
             return '-';
         }
 
+        $bonusMinutes = $setting->bonus_minutes ?? 15;
+
         $baseline = Carbon::createFromFormat(
             'H:i:s',
-            $setting->check_in_start
+            $baselineTime
         );
 
         $time = Carbon::createFromFormat(
             'H:i:s',
-            $attendance->check_in_time
+            $checkInTime
         );
 
-        if ($time->lte($baseline->copy()->subMinutes(15))) {
+        if ($time->lte($baseline->copy()->subMinutes($bonusMinutes))) {
             return 'Bonus';
         }
 
@@ -253,7 +337,16 @@ class AttendanceService
             }
         }
 
-        return 'Setengah Hari';
+        return 'Telat';
+    }
+
+    /**
+     * Cek apakah QueryException berasal dari pelanggaran unique constraint
+     * (SQLSTATE 23000 di MySQL/SQLite, 23505 di PostgreSQL).
+     */
+    private function isDuplicateEntry(QueryException $e): bool
+    {
+        return in_array($e->getCode(), ['23000', '23505'], true);
     }
 
     /**

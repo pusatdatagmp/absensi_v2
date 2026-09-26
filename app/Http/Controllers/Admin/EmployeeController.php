@@ -151,6 +151,7 @@ class EmployeeController extends Controller
                 'check_in_time',
                 'check_out_time',
                 'status',
+                'attendance_level',
                 'location',
                 'latitude',
                 'longitude',
@@ -175,7 +176,7 @@ class EmployeeController extends Controller
             ->paginate(10)
             ->through(function ($attendance) use ($setting, $lateLevels) {
 
-                $attendance->attendance_level = $this->attendanceService->resolveAttendanceLevel(
+                $attendance->attendance_level ??= $this->attendanceService->resolveAttendanceLevel(
                     $attendance,
                     $setting,
                     $lateLevels
@@ -224,7 +225,7 @@ class EmployeeController extends Controller
 
             ->map(function ($attendance) use ($setting, $lateLevels) {
 
-                $attendance->attendance_level = $this->attendanceService->resolveAttendanceLevel(
+                $attendance->attendance_level ??= $this->attendanceService->resolveAttendanceLevel(
                     $attendance,
                     $setting,
                     $lateLevels
